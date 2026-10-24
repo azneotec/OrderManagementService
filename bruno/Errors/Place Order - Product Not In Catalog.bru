@@ -1,0 +1,42 @@
+meta {
+  name: Place Order - Product Not In Catalog
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "items": [
+      {"productId": 999999999, "quantity": 1}
+    ],
+    "deliveryAddress": {
+      "fullName": "Bruno User",
+      "phoneNumber": "+15551234567",
+      "addressLine1": "1 Main St",
+      "addressLine2": "Flat 4",
+      "city": "Pune",
+      "state": "MH",
+      "postalCode": "411001",
+      "country": "IN"
+    },
+    "paymentMethod": "COD"
+  }
+}
+
+assert {
+  res.status: eq 409
+}
+
+docs {
+  A product that is no longer (or never was) in the catalog refuses the whole order.
+}

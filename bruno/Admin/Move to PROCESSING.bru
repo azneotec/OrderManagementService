@@ -1,0 +1,39 @@
+meta {
+  name: Move to PROCESSING
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseUrl}}/orders/{{orderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "PROCESSING",
+    "note": "Packed at warehouse"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq PROCESSING
+}
+
+tests {
+  test("the new status is last on the timeline", function () {
+    const last = res.body.events[res.body.events.length - 1];
+    expect(last.status).to.equal("PROCESSING");
+    expect(last.note).to.equal("Packed at warehouse");
+  });
+}
+
+docs {
+  Admin only (`adminToken`). Moves the COD order one step to PROCESSING; a customer then sees it on Get Tracking and gets an email.
+}

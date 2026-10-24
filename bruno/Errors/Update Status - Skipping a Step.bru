@@ -1,0 +1,29 @@
+meta {
+  name: Update Status - Skipping a Step
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/orders/{{onlineOrderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "DELIVERED"
+  }
+}
+
+assert {
+  res.status: eq 409
+}
+
+docs {
+  Orders move one step at a time, and payment outcomes only come from PaymentService, so a pending order cannot jump to DELIVERED.
+}

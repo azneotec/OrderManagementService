@@ -1,0 +1,31 @@
+meta {
+  name: Cancel Order
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/orders/{{cancelOrderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "CANCELLED",
+    "note": "Customer asked to cancel"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq CANCELLED
+}
+
+docs {
+  An admin may cancel any order until it ships.
+}

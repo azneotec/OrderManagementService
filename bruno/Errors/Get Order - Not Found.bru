@@ -1,0 +1,23 @@
+meta {
+  name: Get Order - Not Found
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/orders/ORD-00000000-NOSUCH00
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 404
+}
+
+docs {
+  Someone else's order looks exactly like a missing one.
+}

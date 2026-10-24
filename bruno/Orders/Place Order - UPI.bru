@@ -1,0 +1,58 @@
+meta {
+  name: Place Order - UPI
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "items": [
+      {"productId": {{productId1}}, "quantity": 1}
+    ],
+    "deliveryAddress": {
+      "fullName": "Bruno User",
+      "phoneNumber": "+15551234567",
+      "addressLine1": "1 Main St",
+      "addressLine2": "Flat 4",
+      "city": "Pune",
+      "state": "MH",
+      "postalCode": "411001",
+      "country": "IN"
+    },
+    "paymentMethod": "UPI"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("onlineOrderNumber", res.body.orderNumber);
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.paymentMethod: eq UPI
+}
+
+tests {
+  test("waits for payment", function () {
+    // PENDING_PAYMENT now; PAYMENT_FAILED or CONFIRMED later if PaymentService is running.
+    expect(["PENDING_PAYMENT", "PAYMENT_FAILED", "CONFIRMED"]).to.include(res.body.status);
+  });
+}
+
+docs {
+  Places an online-payment order. It starts as PENDING_PAYMENT and OMS publishes `payment-requested` on Kafka.
+  With PaymentService running, `paymentLink` appears on `Get Order` a moment later; without it the order simply
+  stays PENDING_PAYMENT. Stores `onlineOrderNumber`.
+}

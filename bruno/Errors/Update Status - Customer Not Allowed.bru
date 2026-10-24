@@ -1,0 +1,29 @@
+meta {
+  name: Update Status - Customer Not Allowed
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{baseUrl}}/orders/{{orderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "status": "DELIVERED"
+  }
+}
+
+assert {
+  res.status: eq 403
+}
+
+docs {
+  Status changes need ROLE_ADMIN; the customer token gets 403.
+}

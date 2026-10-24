@@ -1,0 +1,29 @@
+meta {
+  name: Update Status - Cancel After Delivery
+  type: http
+  seq: 13
+}
+
+put {
+  url: {{baseUrl}}/orders/{{orderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "CANCELLED"
+  }
+}
+
+assert {
+  res.status: eq 409
+}
+
+docs {
+  Cancelling is only possible until the order ships; `orderNumber` was delivered in the Admin folder.
+}

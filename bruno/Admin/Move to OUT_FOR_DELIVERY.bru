@@ -1,0 +1,39 @@
+meta {
+  name: Move to OUT_FOR_DELIVERY
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/orders/{{orderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "OUT_FOR_DELIVERY",
+    "note": "With the courier"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq OUT_FOR_DELIVERY
+}
+
+tests {
+  test("the new status is last on the timeline", function () {
+    const last = res.body.events[res.body.events.length - 1];
+    expect(last.status).to.equal("OUT_FOR_DELIVERY");
+    expect(last.note).to.equal("With the courier");
+  });
+}
+
+docs {
+  Admin only (`adminToken`). Moves the COD order one step to OUT_FOR_DELIVERY; a customer then sees it on Get Tracking and gets an email.
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Update Status - Unknown Status
+  type: http
+  seq: 14
+}
+
+put {
+  url: {{baseUrl}}/orders/{{orderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "TELEPORTED"
+  }
+}
+
+assert {
+  res.status: eq 400
+}

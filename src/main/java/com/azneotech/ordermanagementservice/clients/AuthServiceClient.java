@@ -29,8 +29,8 @@ public class AuthServiceClient implements IAuthClient {
                 throw new DownstreamUnavailableException(SERVICE);
             }
             return response;
-        } catch (RestClientException | IllegalStateException e) {
-            // IllegalStateException is what the load balancer throws when no instance is registered.
+        } catch (RestClientException | IllegalStateException | IllegalArgumentException e) {
+            // The load balancer throws IllegalStateException or IllegalArgumentException when no instance is registered.
             throw new DownstreamUnavailableException(SERVICE, e);
         }
     }

@@ -1,0 +1,42 @@
+meta {
+  name: Place Order - Empty Items
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "items": [],
+    "deliveryAddress": {
+      "fullName": "Bruno User",
+      "phoneNumber": "+15551234567",
+      "addressLine1": "1 Main St",
+      "addressLine2": "Flat 4",
+      "city": "Pune",
+      "state": "MH",
+      "postalCode": "411001",
+      "country": "IN"
+    },
+    "paymentMethod": "COD"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  test("names the invalid field", function () {
+    expect(res.body.fieldErrors).to.have.property("items");
+  });
+}

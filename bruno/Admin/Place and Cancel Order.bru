@@ -1,0 +1,48 @@
+meta {
+  name: Place and Cancel Order
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "items": [
+      {"productId": {{productId2}}, "quantity": 1}
+    ],
+    "deliveryAddress": {
+      "fullName": "Bruno User",
+      "phoneNumber": "+15551234567",
+      "addressLine1": "1 Main St",
+      "addressLine2": "Flat 4",
+      "city": "Pune",
+      "state": "MH",
+      "postalCode": "411001",
+      "country": "IN"
+    },
+    "paymentMethod": "COD"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("cancelOrderNumber", res.body.orderNumber);
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  Places a throwaway COD order (customer `token`) for the next request to cancel. Stores `cancelOrderNumber`.
+}

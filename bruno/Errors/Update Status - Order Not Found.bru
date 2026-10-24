@@ -1,0 +1,25 @@
+meta {
+  name: Update Status - Order Not Found
+  type: http
+  seq: 15
+}
+
+put {
+  url: {{baseUrl}}/orders/ORD-00000000-NOSUCH00/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "PROCESSING"
+  }
+}
+
+assert {
+  res.status: eq 404
+}

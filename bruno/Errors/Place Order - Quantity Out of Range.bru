@@ -1,0 +1,42 @@
+meta {
+  name: Place Order - Quantity Out of Range
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "items": [
+      {"productId": {{productId1}}, "quantity": 100}
+    ],
+    "deliveryAddress": {
+      "fullName": "Bruno User",
+      "phoneNumber": "+15551234567",
+      "addressLine1": "1 Main St",
+      "addressLine2": "Flat 4",
+      "city": "Pune",
+      "state": "MH",
+      "postalCode": "411001",
+      "country": "IN"
+    },
+    "paymentMethod": "COD"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  Quantity must be 1 to 99.
+}

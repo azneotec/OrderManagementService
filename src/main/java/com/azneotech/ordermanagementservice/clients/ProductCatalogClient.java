@@ -31,8 +31,8 @@ public class ProductCatalogClient implements IProductCatalogClient {
             return product;
         } catch (HttpClientErrorException.NotFound e) {
             throw new ProductNotFoundException(productId);
-        } catch (RestClientException | IllegalStateException e) {
-            // IllegalStateException is what the load balancer throws when no instance is registered.
+        } catch (RestClientException | IllegalStateException | IllegalArgumentException e) {
+            // The load balancer throws IllegalStateException or IllegalArgumentException when no instance is registered.
             throw new DownstreamUnavailableException(SERVICE, e);
         }
     }

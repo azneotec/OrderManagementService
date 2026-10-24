@@ -1,0 +1,39 @@
+meta {
+  name: Move to DELIVERED
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/orders/{{orderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "DELIVERED",
+    "note": "Handed over"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq DELIVERED
+}
+
+tests {
+  test("the new status is last on the timeline", function () {
+    const last = res.body.events[res.body.events.length - 1];
+    expect(last.status).to.equal("DELIVERED");
+    expect(last.note).to.equal("Handed over");
+  });
+}
+
+docs {
+  Admin only (`adminToken`). Moves the COD order one step to DELIVERED; a customer then sees it on Get Tracking and gets an email.
+}

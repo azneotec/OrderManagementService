@@ -1,0 +1,31 @@
+meta {
+  name: Get Tracking - After Delivery
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/orders/{{orderNumber}}/tracking
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq DELIVERED
+}
+
+tests {
+  test("shows the whole journey", function () {
+    expect(res.body.events.map(e => e.status)).to.deep.equal(
+      ["CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"]);
+  });
+}
+
+docs {
+  The customer's view of the finished delivery, using `token`.
+}

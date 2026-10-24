@@ -198,6 +198,25 @@ The image carries no `.env` (it is in `.dockerignore`), runs as a non-root user,
 
 The default suite mocks the catalog, the auth service and Kafka. The integration tests use their own `order_management_service_test` database on the compose MySQL (`make infra-up` first).
 
+## Bruno collection
+
+`bruno/` is a [Bruno](https://www.usebruno.com) collection covering every endpoint above plus the error cases (31 requests). Open the folder in Bruno and pick the `Local` (8001 and 8004) or `Local-9004` (9001 and 9004) environment, or run it from a terminal:
+
+```bash
+cd bruno && npx @usebruno/cli run -r --env Local
+```
+
+Run the folders top to bottom, as the later requests reuse what the earlier ones stored:
+
+| Folder | What it does |
+|---|---|
+| `Setup` | signs up a fresh customer on user-auth-service (`authUrl`) and logs in as that customer and as the seeded admin |
+| `Orders` | places a cash-on-delivery and a UPI order, then reads the history, the order and its tracking |
+| `Admin` | moves the COD order to `DELIVERED` one step at a time, checks the timeline, then places and cancels another order |
+| `Errors` | 401, 400, 403, 404 and 409 cases, including a changed `expectedTotal` and an illegal status jump |
+
+It needs the whole stack, not just this service (`make up` in the parent directory): user-auth-service and product-catalog-service through Eureka, and products `productId1` and `productId2` (environment variables, default 1 and 2) in the catalog. The admin login uses the account seeded by user-auth-service, so it is for local development only. PaymentService is optional: without it the UPI order stays `PENDING_PAYMENT`, which the collection accepts.
+
 ## Known limitations
 
 - **No refunds.** A cancelled paid order, or a payment that lands after cancellation, is recorded and logged as an error; the refund is manual.

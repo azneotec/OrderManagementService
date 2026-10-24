@@ -1,0 +1,29 @@
+meta {
+  name: Get Tracking
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/orders/{{orderNumber}}/tracking
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("has a timeline starting at CONFIRMED", function () {
+    expect(res.body.events[0].status).to.equal("CONFIRMED");
+  });
+}
+
+docs {
+  Current status and the timeline of status changes, oldest first.
+}

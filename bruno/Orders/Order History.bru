@@ -1,0 +1,32 @@
+meta {
+  name: Order History
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/orders?page=0&size=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("lists the caller's orders, newest first", function () {
+    expect(res.body.content.length).to.be.at.least(2);
+    expect(res.body.content.map(o => o.orderNumber)).to.include(bru.getVar("orderNumber"));
+    const times = res.body.content.map(o => Date.parse(o.createdAt));
+    expect(times).to.deep.equal([...times].sort((a, b) => b - a));
+  });
+}
+
+docs {
+  Paged history of the logged-in customer's orders, newest first. `size` is capped at 50.
+}

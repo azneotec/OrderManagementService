@@ -1,0 +1,23 @@
+meta {
+  name: Order History - Garbage Token
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{garbageToken}}
+}
+
+script:pre-request {
+  bru.setVar("garbageToken", "not.a.jwt");
+}
+
+assert {
+  res.status: eq 401
+}
