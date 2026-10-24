@@ -1,6 +1,7 @@
 # Everything OrderManagementService needs to run locally: MySQL, and Kafka (+ topics, + UI).
 # Start with `make infra-up` (or `docker compose up -d --wait`), stop with `make infra-down`.
-# The service itself runs on the host: `make run` or `./mvnw spring-boot:run`. Eureka is optional: see .env.example.
+# The service itself runs on the host (`make run` or `./mvnw spring-boot:run`) or, with `make docker-up`, as the `app`
+# container built from the Dockerfile. Eureka is optional: see .env.example.
 #
 # This stack binds the same host ports as the monorepo's root docker-compose.yml and
 # NotificationService/docker-compose.yml (3307, 9092, 8090), so run only one of them at a time.
@@ -25,10 +26,23 @@ services:
       retries: 20
       start_period: 20s
 
-  # Single-node KRaft broker, advertised as localhost:9092 so the service on the host connects with the
-  # default spring.kafka.bootstrap-servers.
+  # Single-node KRaft broker. Two client listeners: localhost:9092 for the service on the host (the default
+  # spring.kafka.bootstrap-servers) and kafka:19092 for containers on the compose network (the `app` service).
   kafka:
     image: apache/kafka:4.3.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,INTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     ports:
       - "9092:9092"
       - "8090:8090" # Kafka UI (kafka-ui shares this container's network, see below)
@@ -70,6 +84,30 @@ services:
       SERVER_PORT: 8090
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: localhost:9092
+
+  # The service itself, built from the Dockerfile. Only started with the `app` profile (`make docker-up`), so a
+  # plain `docker compose up` still gives just the infrastructure for running the app on the host.
+  # Eureka is off by default: a registry on the host is reached at host.docker.internal, see the variables below.
+  app:
+    profiles: ["app"]
+    build: .
+    image: order-management-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/order_management_service?createDatabaseIfNotExist=true
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      EUREKA_CLIENT_ENABLED: ${EUREKA_CLIENT_ENABLED:-false}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://host.docker.internal:8761/eureka/
+    ports:
+      - "${SERVER_PORT:-8004}:8004"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   mysql-data:

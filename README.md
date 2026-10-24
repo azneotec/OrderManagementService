@@ -153,7 +153,29 @@ cp .env.example .env
 make up          # make down stops MySQL and Kafka
 ```
 
+The same stack with the app as a container (built from the `Dockerfile`, see [Run in Docker](#run-in-docker)):
+
+```bash
+make docker-up   # MySQL, Kafka and the app on :8004; make docker-down stops them
+```
+
 A standalone run has Eureka switched off, so it starts but cannot validate tokens or price products. Use it for working on the app; use the root stack to call the endpoints. The standalone compose binds the same host ports as the root one (3307, 9092, 8090), so run only one of them.
+
+### Run in Docker
+
+The `Dockerfile` builds and runs only this service; MySQL, Kafka and Eureka stay outside and are reached through environment variables. `localhost` inside the container is the container itself, so the addresses must be overridden (`host.docker.internal` reaches services published on the host):
+
+```bash
+docker build -t order-management-service .
+docker run --rm -p 8004:8004 \
+  -e DB_URL='jdbc:mysql://host.docker.internal:3307/order_management_service?createDatabaseIfNotExist=true' \
+  -e SPRING_KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:9092 -e EUREKA_CLIENT_ENABLED=false \
+  order-management-service
+```
+
+Kafka on the host advertises itself as `localhost:9092`, which a container cannot use, so `host.docker.internal:9092` only works against a broker that also advertises that name. `make docker-up` avoids this: this directory's `docker-compose.yml` gives the broker a second listener, `kafka:19092`, for containers on the compose network and starts the `app` service (profile `app`) against it, with Eureka off. Set `EUREKA_CLIENT_ENABLED=true` in `.env` to register with a Eureka on the host (`host.docker.internal:8761`).
+
+The image carries no `.env` (it is in `.dockerignore`), runs as a non-root user, and has a health check on `/actuator/health`.
 
 ### Configuration
 

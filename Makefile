@@ -6,6 +6,7 @@
 #
 #   make up        start MySQL and Kafka, then run the app in the foreground on :8004
 #   make down      stop MySQL and Kafka (keeps their data)
+#   make docker-up start MySQL, Kafka and the app as a container built from the Dockerfile
 
 SHELL      := /bin/bash
 .DEFAULT_GOAL := help
@@ -16,7 +17,7 @@ SKIP_TESTS ?= true
 # Export .env for one recipe line when present. Sourced by the shell (not `include`) so quoted values work.
 WITH_ENV = set -a; [ ! -f ./.env ] || . ./.env; set +a;
 
-.PHONY: help up down jar run test test-integration clean infra-up infra-down infra-reset
+.PHONY: help up down jar run test test-integration clean infra-up infra-down infra-reset docker-up docker-down
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-17s %s\n", $$1, $$2}'
@@ -50,3 +51,9 @@ infra-down: ## Stop MySQL and Kafka, keeping their data
 
 infra-reset: ## Stop MySQL and Kafka and delete their data volumes
 	docker compose down -v
+
+docker-up: ## Build the image and start MySQL, Kafka and the app container (http://localhost:8004, Eureka off)
+	docker compose --profile app up -d --build --wait
+
+docker-down: ## Stop the app container together with MySQL and Kafka, keeping their data
+	docker compose --profile app down
